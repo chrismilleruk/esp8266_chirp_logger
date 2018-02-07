@@ -1,3 +1,9 @@
+# Platform.IOs
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+
 # Prerequisites
 *.d
 
@@ -50,3 +56,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Project specific
+src/secrets.h
