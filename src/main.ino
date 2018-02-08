@@ -33,20 +33,19 @@ const int interval_ms = 60000;
 #include <Adafruit_BMP085_U.h>
 #include <I2CSoilMoistureSensor.h>
 
-/* Example code for the Adafruit I2C FRAM breakout */
-Adafruit_FRAM_I2C fram     = Adafruit_FRAM_I2C();
-uint16_t          framAddr = 0;
-
-// Create the MCP9808 temperature sensor object
-Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
-Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
-//Chirp_Sensor_Unified chirp = Chirp_Sensor_Unified(0x21);
-I2CSoilMoistureSensor chirp(0x21);
-
-
 
 // Navigate to http://esp8266.local/fram.txt
 
+
+#include <ESP8266HTTPClient.h>
+
+#define _InitialStateDomain "https://groker.initialstate.com"
+#define _InitialStateUrl "/api/events"
+
+int addr = 0x10;
+const int addrStart = addr;
+const int addrStep = 16;
+const int addrLimit = addrStep * 256;
 
 typedef struct {
   float temperature;
@@ -72,19 +71,6 @@ typedef struct {
 //  int hallSensor;
 } sensor_values_t;
 
-
-#include <ESP8266HTTPClient.h>
-
-#define _InitialStateDomain "https://groker.initialstate.com"
-#define _InitialStateUrl "/api/events"
-
-int addr = 0x10;
-const int addrStart = addr;
-const int addrStep = 16;
-const int addrLimit = addrStep * 256;
-
-boolean fram_detected = false;
-
 unsigned long startTime = 0;
 unsigned long wakeupTime = 0;
 
@@ -94,45 +80,19 @@ void setup ( void ) {
 	pinMode ( led, OUTPUT );
 	digitalWrite ( led, 0 );
 	Serial.begin ( 74880 );
-	WiFi.mode ( WIFI_STA );
-	WiFi.begin ( wifi_ssid, wifi_password );
-	Serial.println ( "" );
 
-	// Wait for connection
-	while ( WiFi.status() != WL_CONNECTED ) {
-		delay ( 500 );
-		Serial.print ( "." );
-	}
-
-	Serial.println ( "" );
-	Serial.print ( "Connected to " );
-	Serial.println ( wifi_ssid );
-	Serial.print ( "IP address: " );
-	Serial.println ( WiFi.localIP() );
-
-	if ( MDNS.begin ( "esp8266" ) ) {
-		Serial.println ( "MDNS responder started" );
-	}
-
-	// server.on ( "/", handleRoot );
-	// server.on ( "/test.svg", drawGraph );
-  // server.on ( "/fram.txt", sendFRAM );
-	// server.on ( "/inline", []() {
-	// 	server.send ( 200, "text/plain", "this works as well" );
-	// } );
-	// server.onNotFound ( handleNotFound );
-	// server.begin();
-	// Serial.println ( "HTTP server started" );
-
+  setupNetwork();
   setupStorage();
   setupSensors();
 
 }
 
 void loop ( void ) {
+  // This line handles loops which don't involve deep sleep.
   if (wakeupTime > startTime) {
     startTime = wakeupTime;
   }
+  
 	server.handleClient();
 
   sensor_values_t values = readSensors();

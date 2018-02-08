@@ -1,4 +1,10 @@
 
+// Create the MCP9808 temperature sensor object
+Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
+Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
+//Chirp_Sensor_Unified chirp = Chirp_Sensor_Unified(0x21);
+I2CSoilMoistureSensor chirp(0x21);
+
 sensor_values_t sensor_values;
 bmp085_sensor_t bmp085_values;
 mcp9808_sensor_t mcp9808_values;
@@ -104,45 +110,6 @@ void printSensorData(sensor_values_t * sensors) {
     Serial.println(sensors->chirp->light);
   }
 
-}
-
-void storeSensorData(sensor_values_t * sensors) {
-  if (fram_detected) {
-    uint16_t val = sensors->timestamp * 0xFF / 1000;
-    framWrite16(addr, val);
-    val = (uint16_t) (sensors->mcp9808->temperature * 0x100); // AB.cd
-    framWrite16(addr+2, val);
-    val = (uint16_t) (sensors->bmp085->temperature * 0x100); // AB.cd
-    framWrite16(addr+4, val);
-    val = (uint16_t) (sensors->bmp085->pressure * 0x10); // ABC.d
-    framWrite16(addr+6, val);
-
-    val = (uint16_t) (sensors->chirp->temperature * 0x100); // AB.cd
-    framWrite16(addr+8, val);
-    val = (uint16_t) (sensors->chirp->moisture * 0x100); // AB.cd
-    framWrite16(addr+10, val);
-    val = (uint16_t) (sensors->chirp->light * 0x100); // AB.cd
-    framWrite16(addr+12, val);
-
-    Serial.print(addr);
-    for (uint8_t a = 0; a < addrStep; a+=1) {
-      if (a % 2 == 0) Serial.print("\t");
-      byte b = fram.read8(addr+a);
-      if (b < 0x10) Serial.print(0);
-      Serial.print(fram.read8(addr+a), HEX);
-    }
-
-    Serial.println();
-
-    // advance to the next address.  there are 512 bytes in
-    // the EEPROM, so go back to 0 when we hit 512.
-    // save all changes to the flash.
-    addr = addr + addrStep;
-    if (addr + addrStep >= addrLimit)
-    {
-      addr = addrStart;
-    }
-  }
 }
 
 void sendSensorData(sensor_values_t * sensors) {
