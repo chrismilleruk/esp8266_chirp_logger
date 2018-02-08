@@ -2,24 +2,27 @@
 // Create the MCP9808 temperature sensor object
 Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
 Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
-//Chirp_Sensor_Unified chirp = Chirp_Sensor_Unified(0x21);
-I2CSoilMoistureSensor chirp(0x21);
+I2CSoilMoistureSensor chirp1(0x21);
+I2CSoilMoistureSensor chirp2(0x22);
 
 sensor_values_t sensor_values;
 bmp085_sensor_t bmp085_values;
 mcp9808_sensor_t mcp9808_values;
-chirp_sensor_t chirp_values;
+chirp_sensor_t chirp1_values;
+chirp_sensor_t chirp2_values;
 
 boolean bmp085_detected = false;
 boolean mcp9808_detected = false;
-boolean chirp_detected = false;
+boolean chirp1_detected = false;
+boolean chirp2_detected = false;
 
 ADC_MODE(ADC_VCC);
 
 void setupSensors() {
   sensor_values.bmp085 = &bmp085_values;
   sensor_values.mcp9808 = &mcp9808_values;
-  sensor_values.chirp = &chirp_values;
+  sensor_values.chirp1 = &chirp1_values;
+  sensor_values.chirp2 = &chirp2_values;
 
   // Make sure the sensor is found, you can also pass in a different i2c
   // address with tempsensor.begin(0x19) for example
@@ -43,18 +46,26 @@ void setupSensors() {
 //    while(1) { yield; }
   }
 
-  Serial.print("Setup Chirp.. ");
-  chirp.begin();
+  Serial.print("Setup chirp(s).. ");
+  chirp1.begin();
+  chirp2.begin();
   delay(1000); // give some time to boot up
-  uint8_t ch_fw = chirp.getVersion();
+  uint8_t ch_fw = chirp1.getVersion();
   if (ch_fw == 0x23) {
-    chirp_detected = true;
+    chirp1_detected = true;
+    Serial.print("(1) ");
+  }
+  ch_fw = chirp2.getVersion();
+  if (ch_fw == 0x23) {
+    chirp2_detected = true;
+    Serial.print("(2) ");
+  }
+  if (chirp1_detected && chirp2_detected) {
     Serial.println("OK");
   } else {
-    /* There was a problem detecting the Chirp */
-    Serial.println("Ooops, no Chirp detected ... Check your wiring or I2C ADDR!");
-//    while (1) { yield; }
-  }
+   /* There was a problem detecting the Chirp */
+   Serial.println("Ooops, Chirps not detected.");
+ }
 
   sensor_t sensor;
 
@@ -100,20 +111,30 @@ void printSensorData(sensor_values_t * sensors) {
     Serial.println("*C");
   }
 
-  if (chirp_detected) {
-    Serial.print("Chirp Temp:\t");
-    Serial.print(sensors->chirp->temperature);
+  if (chirp1_detected) {
+    Serial.print("chirp1 Temp:\t");
+    Serial.print(sensors->chirp1->temperature);
     Serial.print("*C");
     Serial.print("\tMoist:\t");
-    Serial.print(sensors->chirp->moisture);
+    Serial.print(sensors->chirp1->moisture);
     Serial.print("\tLight:\t");
-    Serial.println(sensors->chirp->light);
+    Serial.println(sensors->chirp1->light);
+  }
+
+  if (chirp2_detected) {
+    Serial.print("chirp2 Temp:\t");
+    Serial.print(sensors->chirp2->temperature);
+    Serial.print("*C");
+    Serial.print("\tMoist:\t");
+    Serial.print(sensors->chirp2->moisture);
+    Serial.print("\tLight:\t");
+    Serial.println(sensors->chirp2->light);
   }
 
 }
 
 void sendSensorData(sensor_values_t * sensors) {
-  if (!bmp085_detected && !mcp9808_detected && !chirp_detected) {
+  if (!bmp085_detected && !mcp9808_detected && !chirp1_detected && !chirp2_detected) {
     Serial.println("No sensor data to send");
     return;
   }
@@ -149,10 +170,15 @@ void sendSensorData(sensor_values_t * sensors) {
       url += "&temp_b=" + String(sensors->bmp085->temperature);
       url += "&pressure_b=" + String(sensors->bmp085->pressure);
     }
-    if (chirp_detected) {
-      url += "&temp_chirp=" + String(sensors->chirp->temperature);
-      url += "&light_chirp=" + String(sensors->chirp->light);
-      url += "&moisture_chirp=" + String(sensors->chirp->moisture);
+    if (chirp1_detected) {
+      url += "&temp_chirp1=" + String(sensors->chirp1->temperature);
+      url += "&light_chirp1=" + String(sensors->chirp1->light);
+      url += "&moisture_chirp1=" + String(sensors->chirp1->moisture);
+    }
+    if (chirp2_detected) {
+      url += "&temp_chirp2=" + String(sensors->chirp2->temperature);
+      url += "&light_chirp2=" + String(sensors->chirp2->light);
+      url += "&moisture_chirp2=" + String(sensors->chirp2->moisture);
     }
     url += "&vcc_volt=" + String(sensors->vccVoltage);
 //    url += "&hall_read=" + String(sensors->hallSensor);
@@ -197,11 +223,18 @@ sensor_values_t readSensors() {
     mcp9808_values.temperature = tempsensor.readTempC();
   }
 
-  if (chirp_detected) {
-    /* Read the chirp values */
-    chirp_values.moisture = chirp.getCapacitance();
-    chirp_values.temperature = (float)chirp.getTemperature() / 10;
-    chirp_values.light = chirp.getLight(true);
+  if (chirp1_detected) {
+    /* Read the chirp1 values */
+    chirp1_values.moisture = chirp1.getCapacitance();
+    chirp1_values.temperature = (float)chirp1.getTemperature() / 10;
+    chirp1_values.light = chirp1.getLight(true);
+  }
+
+  if (chirp2_detected) {
+    /* Read the chirp2 values */
+    chirp2_values.moisture = chirp2.getCapacitance();
+    chirp2_values.temperature = (float)chirp2.getTemperature() / 10;
+    chirp2_values.light = chirp2.getLight(true);
   }
 
   sensor_values.vccVoltage = ((float)ESP.getVcc())/1024;

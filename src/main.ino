@@ -60,7 +60,8 @@ typedef struct {
 
 typedef struct {
   unsigned long timestamp;
-  chirp_sensor_t * chirp;
+  chirp_sensor_t * chirp1;
+  chirp_sensor_t * chirp2;
   bmp085_sensor_t * bmp085;
   mcp9808_sensor_t * mcp9808;
   float vccVoltage;

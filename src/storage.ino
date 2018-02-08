@@ -34,19 +34,25 @@ void storeSensorData(sensor_values_t * sensors) {
   if (fram_detected) {
     uint16_t val = sensors->timestamp * 0xFF / 1000;
     framWrite16(addr, val);
-    val = (uint16_t) (sensors->mcp9808->temperature * 0x100); // AB.cd
+    // val = (uint16_t) (sensors->mcp9808->temperature * 0x100); // AB.cd
+    // framWrite16(addr+2, val);
+    // val = (uint16_t) (sensors->bmp085->temperature * 0x100); // AB.cd
+    // framWrite16(addr+4, val);
+    // val = (uint16_t) (sensors->bmp085->pressure * 0x10); // ABC.d
+    // framWrite16(addr+6, val);
+    val = (uint16_t) (sensors->chirp1->temperature * 0x100); // AB.cd
     framWrite16(addr+2, val);
-    val = (uint16_t) (sensors->bmp085->temperature * 0x100); // AB.cd
+    val = (uint16_t) (sensors->chirp1->moisture * 0x100); // AB.cd
     framWrite16(addr+4, val);
-    val = (uint16_t) (sensors->bmp085->pressure * 0x10); // ABC.d
+    val = (uint16_t) (sensors->chirp1->light * 0x100); // AB.cd
     framWrite16(addr+6, val);
-
-    val = (uint16_t) (sensors->chirp->temperature * 0x100); // AB.cd
+    val = (uint16_t) (sensors->chirp2->temperature * 0x100); // AB.cd
     framWrite16(addr+8, val);
-    val = (uint16_t) (sensors->chirp->moisture * 0x100); // AB.cd
+    val = (uint16_t) (sensors->chirp2->moisture * 0x100); // AB.cd
     framWrite16(addr+10, val);
-    val = (uint16_t) (sensors->chirp->light * 0x100); // AB.cd
+    val = (uint16_t) (sensors->chirp2->light * 0x100); // AB.cd
     framWrite16(addr+12, val);
+    framWrite16(addr+14, 0x0);
 
     Serial.print(addr);
     for (uint8_t a = 0; a < addrStep; a+=1) {
