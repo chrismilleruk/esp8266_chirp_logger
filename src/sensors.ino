@@ -120,24 +120,24 @@ void sendSensorData(sensor_values_t * sensors) {
 
   if ( WiFi.status() == WL_CONNECTED ) {
 
-    String host = "groker.initialstate.com";
-    String fingerprint = "D2 DF 3E 80 5F 89 0C 7D 9D D2 10 B4 A7 21 82 C8 C8 43 FE 0D";
+    const char* host = "groker.initialstate.com";
+    // const char* fingerprint = "D2 DF 3E 80 5F 89 0C 7D 9D D2 10 B4 A7 21 82 C8 C8 43 FE 0D";
+    const char* fingerprint = "9C 81 BD 65 44 89 2A 68 FB 33 B5 F1 7F 3F 1D 16 AC 11 B6 23";
     int httpsPort = 443;
 
     // Use WiFiClientSecure class to create TLS connection
     WiFiClientSecure client;
     Serial.print("connecting to ");
     Serial.println(host);
+
     if (!client.connect(host, httpsPort)) {
       Serial.println("connection failed");
       return;
     }
 
-    //if (client.verify(fingerprint, host)) {
-    //Serial.println("Certificate matches");
-    //} else {
-    //Serial.println("Certificate doesn't match");
-    //}
+    if (!client.verify(fingerprint, host)) {
+      Serial.println("Certificate doesn't match");
+    }
 
     String url = _InitialStateUrl;
     url += "?accessKey=" + String(initialstate_access_key);

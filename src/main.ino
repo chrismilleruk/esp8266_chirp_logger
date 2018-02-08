@@ -13,16 +13,12 @@ struct rst_info *reset_info = system_get_rst_info();
 
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
 
 #include "secrets.h"
 // const char *wifi_ssid = "***";
 // const char *wifi_password = "***";
 // #define initialstate_bucket_key "***"
 // #define initialstate_access_key "***"
-
-ESP8266WebServer server ( 80 );
 
 const int led = 0;
 const int interval_ms = 60000;
@@ -92,8 +88,6 @@ void loop ( void ) {
   if (wakeupTime > startTime) {
     startTime = wakeupTime;
   }
-  
-	server.handleClient();
 
   sensor_values_t values = readSensors();
   printSensorData(&values);

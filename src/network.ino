@@ -18,8 +18,8 @@ void setupNetwork() {
 	Serial.print ( "IP address: " );
 	Serial.println ( WiFi.localIP() );
 
-	if ( MDNS.begin ( "esp8266" ) ) {
-		Serial.println ( "MDNS responder started" );
-	}
+	// if ( MDNS.begin ( "esp8266" ) ) {
+	// 	Serial.println ( "MDNS responder started" );
+	// }
 
 }
