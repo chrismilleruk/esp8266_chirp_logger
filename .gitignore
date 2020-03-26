@@ -1,8 +1,8 @@
 # Platform.IOs
-.pioenvs
-.piolibdeps
+# .pioenvs
+# .piolibdeps
 .clang_complete
-.gcc-flags.json
+# .gcc-flags.json
 
 # Prerequisites
 *.d

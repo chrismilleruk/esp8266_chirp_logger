@@ -1,0 +1,46 @@
+{
+    "description": "Unified sensor driver for Adafruit's BMP085 & BMP180 breakouts", 
+    "repository": {
+        "url": "https://github.com/adafruit/Adafruit_BMP085_Unified", 
+        "type": "git"
+    }, 
+    "platforms": [
+        "atmelavr", 
+        "atmelsam", 
+        "espressif8266", 
+        "intel_arc32", 
+        "microchippic32", 
+        "nordicnrf51", 
+        "teensy", 
+        "timsp430"
+    ], 
+    "export": {
+        "exclude": [
+            "extras", 
+            "docs", 
+            "tests", 
+            "test", 
+            "*.doxyfile", 
+            "*.pdf"
+        ], 
+        "include": null
+    }, 
+    "authors": [
+        {
+            "maintainer": true, 
+            "name": "Adafruit", 
+            "url": null, 
+            "email": "info@adafruit.com"
+        }
+    ], 
+    "keywords": [
+        "sensors"
+    ], 
+    "id": 16, 
+    "name": "Adafruit BMP085 Unified", 
+    "frameworks": [
+        "arduino"
+    ], 
+    "version": "1.0.0", 
+    "homepage": null
+}
