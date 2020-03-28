@@ -1,4 +1,6 @@
 
+#include <StackThunk.h>
+
 // Create the MCP9808 temperature sensor object
 Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
 Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
@@ -102,11 +104,11 @@ void printSensorData(sensor_values_t * sensors) {
     Serial.print(" hPa");
     Serial.print("\tTemp:\t");
     Serial.print(sensors->bmp085->temperature);
-    Serial.print("*C");
+    Serial.println("*C");
   }
 
   if (mcp9808_detected) {
-    Serial.print("\tMCP Temp:\t");
+    Serial.print("MCP Temp:\t");
     Serial.print(sensors->mcp9808->temperature);
     Serial.println("*C");
   }
@@ -134,38 +136,65 @@ void printSensorData(sensor_values_t * sensors) {
 }
 
 void sendSensorData(sensor_values_t * sensors) {
-  if (!bmp085_detected && !mcp9808_detected && !chirp1_detected && !chirp2_detected) {
-    Serial.println("No sensor data to send");
-    return;
-  }
+  Serial.println();
 
+  static const char* host = "groker.init.st";
+  int port = 443;
+  String url = "/api/events";
+  url += "?accessKey=" + String(initialstate_access_key);
+  url += "&bucketKey=" + String(initialstate_bucket_key);
+
+  // *.initialstate.com
+  // *.init.st
+  // Expires: Sunday, 7 March 2021 at 12:00:00 Greenwich Mean Time
+  // SHA 256  EF 25 4B 79 96 E1 EE BB A4 82 F6 CB B2 16 02 DC F1 2B C0 EB 9E 10 30 F5 A1 75 7E 23 63 BA 66 AB
+  // SHA-1    26 79 30 97 D3 DF 5A 60 55 C2 FC 29 B4 12 8B 56 28 B4 E6 05
+  static const char* fingerprint PROGMEM = "26 79 30 97 D3 DF 5A 60 55 C2 FC 29 B4 12 8B 56 28 B4 E6 05";
+
+  // Invalid Fingerprint for testing.
+  // static const char* fingerprint PROGMEM = "BA D0 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"; 
+  
   if ( WiFi.status() == WL_CONNECTED ) {
 
-    const char* host = "groker.initialstate.com";
-    // const char* fingerprint = "D2 DF 3E 80 5F 89 0C 7D 9D D2 10 B4 A7 21 82 C8 C8 43 FE 0D";
-    const char* fingerprint = "9C 81 BD 65 44 89 2A 68 FB 33 B5 F1 7F 3F 1D 16 AC 11 B6 23";
-    int httpsPort = 443;
+    // Track memory usage
+    ESP.resetFreeContStack();
+    uint32_t freeStackStart = ESP.getFreeContStack();
 
     // Use WiFiClientSecure class to create TLS connection
     WiFiClientSecure client;
-    Serial.print("connecting to ");
+    boolean isSecure = (port == 443);
+
+    Serial.print("🔒 connecting to ");
     Serial.println(host);
 
-    // BearSSL setInsecure() to mimic AxTLS
-    client.setInsecure();
+    // We will test the fingerprint of the SSL cert to ensure it matches.
+    if (isSecure) {
+      client.setFingerprint(fingerprint);
 
-    if (!client.connect(host, httpsPort)) {
-      Serial.println("connection failed");
-      return;
+      if (client.connect(host, port)) {
+        Serial.println("🔐 secure connection made");
+      } else {
+        Serial.println("🔐 secure connection failed");
+
+        // This could be because the SSL cert has been renewed, and the fingerprint has changed.
+        // Try insecure connection instead.
+        isSecure = false;
+      }
     }
 
-    if (!client.verify(fingerprint, host)) {
-      Serial.println("Certificate doesn't match");
+    if (!isSecure) {
+      // Using setInsecure will not validate the SSL cert in any way.
+      client.setInsecure();
+
+      if (client.connect(host, port)) {
+        Serial.printf("🔒⚠️  insecure connection on port %d\n", port);
+      } else {
+        Serial.println("🔒❌ connection failed");
+        return;
+      }
     }
 
-    String url = _InitialStateUrl;
-    url += "?accessKey=" + String(initialstate_access_key);
-    url += "&bucketKey=" + String(initialstate_bucket_key);
+
     if (mcp9808_detected) {
       url += "&temp_c=" + String(sensors->mcp9808->temperature);
     }
@@ -185,25 +214,36 @@ void sendSensorData(sensor_values_t * sensors) {
     }
     url += "&vcc_volt=" + String(sensors->vccVoltage);
 //    url += "&hall_read=" + String(sensors->hallSensor);
+    url += "&isSecure=" + String(isSecure);
 
-    Serial.print("requesting URL: ");
+    Serial.print("🌐 URL: ");
     Serial.println(url);
+
+    Serial.print("🌐 Request ");
     client.print(String("GET ") + url + " HTTP/1.1\r\n" +
     "Host: " + host + "\r\n" +
     "Connection: close\r\n\r\n");
-    Serial.println("request sent 🚀");
+
     int repeatCounter = 10;
     while (!client.available() && repeatCounter--) {
       delay(500);
+      Serial.print(".");
     }
+    Serial.println("sent 🚀");
     
     String line;
     line = client.readStringUntil('\n');
-    Serial.println("reply was:");
-    Serial.println("==========");
+
+    Serial.println("🌐 Response:");
     Serial.println(line);
-    Serial.println("==========");
-    Serial.println("closing connection");
+
+    client.stop();
+    Serial.println("🔐 Connection Closed");
+      
+    // Track memory usage
+    uint32_t freeStackEnd = ESP.getFreeContStack();
+    Serial.printf("\n💻 CONT stack used: %d\n", freeStackStart - freeStackEnd);
+    Serial.printf("💻 BSSL stack used: %d\n-------\n\n", stack_thunk_get_max_usage());
   }
 }
 
