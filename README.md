@@ -2,6 +2,9 @@
 
 Captures sensor data over SPI and sends it to InitialState.com.
 
+### Circuit diagram
+
+![Circuit diagram](./docs/circuit.svg)
 
 ### Initial State Dashboard
 
