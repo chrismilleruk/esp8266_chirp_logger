@@ -151,6 +151,9 @@ void sendSensorData(sensor_values_t * sensors) {
     Serial.print("connecting to ");
     Serial.println(host);
 
+    // BearSSL setInsecure() to mimic AxTLS
+    client.setInsecure();
+
     if (!client.connect(host, httpsPort)) {
       Serial.println("connection failed");
       return;
@@ -188,11 +191,12 @@ void sendSensorData(sensor_values_t * sensors) {
     client.print(String("GET ") + url + " HTTP/1.1\r\n" +
     "Host: " + host + "\r\n" +
     "Connection: close\r\n\r\n");
-    Serial.println("request sent");
+    Serial.println("request sent 🚀");
     int repeatCounter = 10;
     while (!client.available() && repeatCounter--) {
       delay(500);
     }
+    
     String line;
     line = client.readStringUntil('\n');
     Serial.println("reply was:");
