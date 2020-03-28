@@ -1,6 +1,6 @@
 # esp8266_chirp_logger
 
-Captures sensor data over SPI and sends it to InitialState.com.
+Captures sensor data over I2C and sends it to InitialState.com.
 
 ### Circuit diagram
 
