@@ -2,18 +2,6 @@
 
 Captures sensor data over I2C and sends it to InitialState.com.
 
-### Circuit diagram
-
-![Circuit diagram](./docs/circuit.svg)
-
-### Initial State Dashboard
-
-![InitialState dashboard](./docs/initialstate.png)
-
-### Serial output
-
-![Terminal output](./docs/terminal_output.svg)
-
 ```
 🌐 ....
 🌐 Connected to [WIFI]
@@ -35,3 +23,15 @@ Captures sensor data over I2C and sends it to InitialState.com.
 
 💤 Going to sleep for 49244ms
 ```
+
+### Circuit diagram
+
+![Circuit diagram](./docs/circuit.svg)
+
+### Initial State Dashboard
+
+![InitialState dashboard](./docs/initialstate.png)
+
+### Serial output
+
+![Terminal output](./docs/terminal_output.svg)
