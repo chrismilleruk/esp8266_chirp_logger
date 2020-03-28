@@ -62,6 +62,8 @@ typedef struct {
   unsigned long timestamp;
   chirp_sensor_t * chirp1;
   chirp_sensor_t * chirp2;
+  chirp_sensor_t * chirp3;
+  chirp_sensor_t * chirp4;
   bmp085_sensor_t * bmp085;
   mcp9808_sensor_t * mcp9808;
   float vccVoltage;
@@ -99,7 +101,7 @@ void loop ( void ) {
   wakeupTime = startTime + interval_ms;
   long waitTime = wakeupTime > now ? wakeupTime - now : 0;
 
-  Serial.print("Going to sleep for ");
+  Serial.print("💤 Going to sleep for ");
   Serial.print(waitTime);
   Serial.println("ms");
 

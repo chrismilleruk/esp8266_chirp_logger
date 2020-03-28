@@ -2,21 +2,27 @@
 #include <StackThunk.h>
 
 // Create the MCP9808 temperature sensor object
-Adafruit_MCP9808 tempsensor = Adafruit_MCP9808();
+Adafruit_MCP9808 mcp9808 = Adafruit_MCP9808();
 Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
 I2CSoilMoistureSensor chirp1(0x21);
 I2CSoilMoistureSensor chirp2(0x22);
+I2CSoilMoistureSensor chirp3(0x23);
+I2CSoilMoistureSensor chirp4(0x24);
 
 sensor_values_t sensor_values;
 bmp085_sensor_t bmp085_values;
 mcp9808_sensor_t mcp9808_values;
 chirp_sensor_t chirp1_values;
 chirp_sensor_t chirp2_values;
+chirp_sensor_t chirp3_values;
+chirp_sensor_t chirp4_values;
 
 boolean bmp085_detected = false;
 boolean mcp9808_detected = false;
 boolean chirp1_detected = false;
 boolean chirp2_detected = false;
+boolean chirp3_detected = false;
+boolean chirp4_detected = false;
 
 ADC_MODE(ADC_VCC);
 
@@ -25,112 +31,140 @@ void setupSensors() {
   sensor_values.mcp9808 = &mcp9808_values;
   sensor_values.chirp1 = &chirp1_values;
   sensor_values.chirp2 = &chirp2_values;
+  sensor_values.chirp3 = &chirp3_values;
+  sensor_values.chirp4 = &chirp4_values;
 
   // Make sure the sensor is found, you can also pass in a different i2c
-  // address with tempsensor.begin(0x19) for example
-  Serial.print("Setup MCP9808.. ");
-  if (tempsensor.begin()) {
+  // address with mcp9808.begin(0x19) for example
+  Serial.print("🌱 Setup MCP9808.. ");
+  if (mcp9808.begin()) {
     mcp9808_detected = true;
     Serial.println("OK");
   } else {
     Serial.println("Oops, no MCP9808 detected!");
-//    while (1) { yield; }
   }
 
   /* Initialise the sensor */
-  Serial.print("Setup BMP085.. ");
+  Serial.print("🌱 Setup BMP085.. ");
   if(bmp.begin()) {
     bmp085_detected = true;
     Serial.println("OK");
   } else {
     /* There was a problem detecting the BMP085 ... check your connections */
     Serial.println("Ooops, no BMP085 detected ... Check your wiring or I2C ADDR!");
-//    while(1) { yield; }
   }
 
-  Serial.print("Setup chirp(s).. ");
+  Serial.print("🌱 Setup chirp(s).. ");
   chirp1.begin();
   chirp2.begin();
+  chirp3.begin();
+  chirp4.begin();
   delay(1000); // give some time to boot up
+
   uint8_t ch_fw = chirp1.getVersion();
   if (ch_fw == 0x23) {
     chirp1_detected = true;
     Serial.print("(1) ");
   }
+
   ch_fw = chirp2.getVersion();
   if (ch_fw == 0x23) {
     chirp2_detected = true;
     Serial.print("(2) ");
   }
-  if (chirp1_detected && chirp2_detected) {
+  
+  ch_fw = chirp3.getVersion();
+  if (ch_fw == 0x23) {
+    chirp3_detected = true;
+    Serial.print("(3) ");
+  }
+  
+  ch_fw = chirp4.getVersion();
+  if (ch_fw == 0x23) {
+    chirp4_detected = true;
+    Serial.print("(4) ");
+  }
+  
+  if (chirp1_detected || chirp2_detected || chirp3_detected || chirp4_detected) {
     Serial.println("OK");
   } else {
    /* There was a problem detecting the Chirp */
    Serial.println("Ooops, Chirps not detected.");
  }
 
-  sensor_t sensor;
+  // sensor_t sensor;
 
-  if (bmp085_detected) {
-    bmp.getSensor(&sensor);
-    Serial.println("------------------------------------");
-    Serial.print  ("Sensor:       "); Serial.println(sensor.name);
-    Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
-    Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
-    Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" hPa");
-    Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" hPa");
-    Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" hPa");
-    Serial.println("------------------------------------");
-    Serial.println("");
-  }
+  // if (bmp085_detected) {
+  //   bmp.getSensor(&sensor);
+  //   Serial.println("------------------------------------");
+  //   Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+  //   Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+  //   Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+  //   Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" hPa");
+  //   Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" hPa");
+  //   Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" hPa");
+  //   Serial.println("------------------------------------");
+  //   Serial.println("");
+  // }
 }
 
 
 
+void printChirpSensorData(chirp_sensor_t * chirp) {
+  Serial.printf("Temp:\t🌡 %.2f*C\tMoist:\t💧%.1f\tLight:\t☀️ %.1f\n",
+    chirp->temperature,
+    chirp->moisture,
+    chirp->light
+  );
+}
+
 void printSensorData(sensor_values_t * sensors) {
 
-  Serial.print("Voltage:\t");
+  Serial.println();
+  Serial.print("🌱 ESP8266\t");
+  Serial.print("Volts:\t⚡️");
   Serial.print(sensors->vccVoltage);
   Serial.print("V");
 //  Serial.print("\tHall:\t");
 //  Serial.print(sensors->hallSensor);
-  Serial.print("\tReset reason:\t");
+  Serial.print("\t\tReset reason:\t⏏");
   Serial.println(reset_info->reason);
 
   if (bmp085_detected) {
     /* Display atmospheric pressue in hPa */
-    Serial.print("BMP Pressure:\t");
-    Serial.print(sensors->bmp085->pressure);
-    Serial.print(" hPa");
-    Serial.print("\tTemp:\t");
+    Serial.print("🌱 BMP085\t");
+    Serial.print("Temp:\t🌡 ");
     Serial.print(sensors->bmp085->temperature);
-    Serial.println("*C");
+    Serial.print("*C\t");
+    Serial.print("Pressure:\t🪂 ");
+    Serial.print(sensors->bmp085->pressure);
+    Serial.println(" hPa");
   }
 
   if (mcp9808_detected) {
-    Serial.print("MCP Temp:\t");
+    Serial.print("🌱 MCP9808\tTemp:\t🌡 ");
     Serial.print(sensors->mcp9808->temperature);
     Serial.println("*C");
   }
 
   if (chirp1_detected) {
-    Serial.print("chirp1 Temp:\t");
-    Serial.print(sensors->chirp1->temperature);
-    Serial.print("*C");
-    Serial.print("\tMoist:\t");
-    Serial.print(sensors->chirp1->moisture);
-    Serial.print("\tLight:\t");
-    Serial.println(sensors->chirp1->light);
+    Serial.print("🌱 chirp1\t");
+    printChirpSensorData(sensors->chirp1);
   }
 
   if (chirp2_detected) {
-    Serial.print("chirp2 Temp:\t");
-    Serial.print(sensors->chirp2->temperature);
-    Serial.print("*C");
-    Serial.print("\tMoist:\t");
-    Serial.print(sensors->chirp2->moisture);
-    Serial.print("\tLight:\t");
-    Serial.println(sensors->chirp2->light);
+    Serial.print("🌱 chirp2\t");
+    printChirpSensorData(sensors->chirp2);
+  }
+
+  if (chirp3_detected) {
+    Serial.print("🌱 chirp3\t");
+    printChirpSensorData(sensors->chirp3);
+  }
+
+  if (chirp4_detected) {
+    Serial.print("🌱 chirp4\t");
+    printChirpSensorData(sensors->chirp4);
   }
 
 }
@@ -264,7 +298,7 @@ sensor_values_t readSensors() {
 
   if (mcp9808_detected) {
     /* Read the temperature from the MCP9808 */
-    mcp9808_values.temperature = tempsensor.readTempC();
+    mcp9808_values.temperature = mcp9808.readTempC();
   }
 
   if (chirp1_detected) {
@@ -279,6 +313,20 @@ sensor_values_t readSensors() {
     chirp2_values.moisture = chirp2.getCapacitance();
     chirp2_values.temperature = (float)chirp2.getTemperature() / 10;
     chirp2_values.light = chirp2.getLight(true);
+  }
+
+  if (chirp3_detected) {
+    /* Read the chirp3 values */
+    chirp3_values.moisture = chirp3.getCapacitance();
+    chirp3_values.temperature = (float)chirp3.getTemperature() / 10;
+    chirp3_values.light = chirp3.getLight(true);
+  }
+
+  if (chirp4_detected) {
+    /* Read the chirp4 values */
+    chirp4_values.moisture = chirp4.getCapacitance();
+    chirp4_values.temperature = (float)chirp4.getTemperature() / 10;
+    chirp4_values.light = chirp4.getLight(true);
   }
 
   sensor_values.vccVoltage = ((float)ESP.getVcc())/1024;

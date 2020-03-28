@@ -7,7 +7,7 @@ boolean fram_detected = false;
 
 
 void setupStorage() {
-  Serial.print("I2C FRAM... ");
+  Serial.print("📀 I2C FRAM... ");
   if (fram.begin()) {  // alternate i2c addr, e.g. begin(0x51);
     Serial.println("Found");
     fram_detected = true;
@@ -18,7 +18,7 @@ void setupStorage() {
   if (fram_detected) {
     // Read the first byte
     uint8_t test = fram.read8(0x0);
-    Serial.print("Restarted "); Serial.print(test); Serial.println(" times");
+    Serial.print("📀 Restarted "); Serial.print(test); Serial.println(" times");
     // Test write ++
     fram.write8(0x0, test+1);
   }
@@ -54,6 +54,7 @@ void storeSensorData(sensor_values_t * sensors) {
     framWrite16(addr+12, val);
     framWrite16(addr+14, 0x0);
 
+    Serial.print("📀 ");
     Serial.print(addr);
     for (uint8_t a = 0; a < addrStep; a+=1) {
       if (a % 2 == 0) Serial.print("\t");
