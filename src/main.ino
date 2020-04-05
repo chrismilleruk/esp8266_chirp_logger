@@ -72,6 +72,7 @@ typedef struct {
 
 unsigned long startTime = 0;
 unsigned long wakeupTime = 0;
+unsigned int deviceCount = 0;
 
 void setup ( void ) {
   startTime = millis();
@@ -92,8 +93,8 @@ void loop ( void ) {
     startTime = wakeupTime;
   }
 
-  sensor_values_t values = readSensors();
-  printSensorData(&values);
+  sensor_values_t values = readSensors(true);
+  // printSensorData(&values);
   storeSensorData(&values);
   sendSensorData(&values);
 
