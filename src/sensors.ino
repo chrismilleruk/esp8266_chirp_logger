@@ -8,6 +8,7 @@ I2CSoilMoistureSensor chirp1(0x21);
 I2CSoilMoistureSensor chirp2(0x22);
 I2CSoilMoistureSensor chirp3(0x23);
 I2CSoilMoistureSensor chirp4(0x24);
+Adafruit_MCP23017 mcp23017;
 
 sensor_values_t sensor_values;
 bmp085_sensor_t bmp085_values;
@@ -17,6 +18,7 @@ chirp_sensor_t chirp2_values;
 chirp_sensor_t chirp3_values;
 chirp_sensor_t chirp4_values;
 
+boolean mcp23017_detected = false;
 boolean bmp085_detected = false;
 boolean mcp9808_detected = false;
 boolean chirp1_detected = false;
@@ -26,6 +28,19 @@ boolean chirp4_detected = false;
 
 ADC_MODE(ADC_VCC);
 
+void setRAG(uint8_t red, uint8_t amber, uint8_t green) {
+  if (mcp23017_detected) {
+    Serial.print("🚥 ");
+    mcp23017.digitalWrite(0, red);
+    Serial.print(red ? "🔴 " : "⚪️ ");
+    mcp23017.digitalWrite(1, amber);
+    Serial.print(amber ? "🟠 " : "⚪️ ");
+    mcp23017.digitalWrite(2, green);
+    Serial.print(green ? "🟢 " : "⚪️ ");
+    Serial.println();
+  }
+}
+
 void setupSensors() {
   sensor_values.bmp085 = &bmp085_values;
   sensor_values.mcp9808 = &mcp9808_values;
@@ -33,6 +48,24 @@ void setupSensors() {
   sensor_values.chirp2 = &chirp2_values;
   sensor_values.chirp3 = &chirp3_values;
   sensor_values.chirp4 = &chirp4_values;
+
+  Serial.print("🌱 Setup MCP23017.. ");
+  mcp23017.begin();
+  for (int p = 0; p < 16; p +=1) {
+    mcp23017.pinMode(p, OUTPUT);
+  }
+  mcp23017.writeGPIOAB(0x7777);
+  uint16_t ioValues = mcp23017.readGPIOAB();
+  Serial.printf("💧 0x%x ", ioValues);
+  if (ioValues == 0x7777) {
+    mcp23017_detected = true;
+    deviceCount += 1;
+    Serial.println("OK");
+  } else {
+    Serial.println("Oops, no MCP23017 detected!");
+  }
+  mcp23017.writeGPIOAB(0x0000);
+  setRAG(HIGH, LOW, LOW);
 
   // Make sure the sensor is found, you can also pass in a different i2c
   // address with mcp9808.begin(0x19) for example
@@ -165,6 +198,7 @@ void sendSensorData(sensor_values_t * sensors) {
       if (client.connect(host, port)) {
         Serial.println("🔐 secure connection made");
       } else {
+        setRAG(HIGH, HIGH, LOW);
         Serial.println("🔐 secure connection failed");
 
         // This could be because the SSL cert has been renewed, and the fingerprint has changed.
@@ -180,6 +214,7 @@ void sendSensorData(sensor_values_t * sensors) {
       if (client.connect(host, port)) {
         Serial.printf("🔒⚠️  insecure connection on port %d\n", port);
       } else {
+        setRAG(HIGH, LOW, LOW);
         Serial.println("🔒❌ connection failed");
         return;
       }

@@ -1,16 +1,29 @@
 * Netlist created with www.circuit-diagram.org
-* 
+* esp8266 chirp logger
 'rail com:0 voltage=0 frequency=50 t=Earth
-'rail com:1 voltage=0 frequency=50 t=Earth
-'rail com:2 voltage=0 frequency=50 t=Earth
-'rail com:3 voltage=3.3 frequency=50 t=Rail
-'rail com:4 voltage=3.3 frequency=50 t=Rail
-'rail com:5 voltage=3.3 frequency=50 t=Rail
-'rail com:6 voltage=3.3 frequency=50 t=Rail
+'resistor b:0 a:1 style=IEC text= resistance=220 showResistance=True t=Standard
+'resistor b:0 a:2 style=IEC text= resistance=220 showResistance=True t=Standard
+'resistor b:0 a:3 style=IEC text= resistance=220 showResistance=True t=Standard
+'led an:4 cat:3 t=LED
+'led an:5 cat:1 t=LED
+'led an:6 cat:2 t=LED
 'rail com:7 voltage=3.3 frequency=50 t=Rail
-'rail com:8 voltage=0 frequency=50 t=Earth
-'microcontroller #3:9 #5:2 #1:4 #2:10 header=Catnip Chirp Soil sensor sz=6 p0=MISO p1=VCC p2=SCK p3=SDA/MOSI p4=RESET p5=GND p6= p7= p8= p9= p10= p11= p12= p13= p14= p15= p16= p17= p18= p19= p20= p21= p22= p23= p24= p25= p26= p27= p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
-'microcontroller #3:9 #1:0 #0:5 #2:10 header=Adafruit BMP085 Breakout sz=6 p0=VCC p1=GND p2=SCL p3=SDA p4=3.3 p5= p6= p7= p8= p9= p10= p11= p12= p13= p14= p15= p16= p17= p18= p19= p20= p21= p22= p23= p24= p25= p26= p27= p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
-'microcontroller #2:10 #3:9 #1:1 #0:6 header=MCP9808 High Accuracy I2C Temperature Sensor Breakout Board sz=8 p0=VDD p1=GND p2=SCL p3=SDA p4=ALERT p5=A0 p6=A1 p7=A2 p8= p9= p10= p11= p12= p13= p14= p15= p16= p17= p18= p19= p20= p21= p22= p23= p24= p25= p26= p27= p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
-'microcontroller #4:9 #0:3 #3:10 header=Adafruit I2C Non-Volatile FRAM breakout - 256Kbit / 32KByte sz=8 p0=VCC p1=GND p2=WP p3=SCL p4=SDA p5=A2 p6=A1 p7=A0 p8= p9= p10= p11= p12= p13= p14= p15= p16= p17= p18= p19= p20= p21= p22= p23= p24= p25= p26= p27= p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
-'microcontroller #0:11 #25:11 #31:9 #2:7 #6:8 #29:10 header=Feather Huzzah sz=32 p0=RST p1= p2=3V p3= p4=NC p5= p6=GND p7= p8=ADC p9=BAT p10=NC p11=EN p12=NC p13=USB p14=NC p15=14 p16=NC p17=12 p18=NC p19=13 p20=SCK p21=15 p22=MO p23=0 p24=MI p25=16 p26=RX p27=2 p28=TX p29=5 SCL p30=CHPD p31=4 SDA p32= p33= p34= p35= p36= p37= p38= p39=
+'resistor b:7 a:8 style=IEC text= resistance=10000 showResistance=True t=Standard
+'rail com:9 voltage=0 frequency=50 t=Earth
+'rail com:10 voltage=3.3 frequency=50 t=Rail
+'rail com:11 voltage=0 frequency=50 t=Earth
+'microcontroller #24:12 #22:13 #13:6 #11:4 #15:5 #21:8 #23:11 #25:11 #27:11 #18:9 #16:10 header=MCP23017 sz=28 p0=GPB0 p1=GPA7 p2=GPB1 p3=GPA6 p4=GPB2 p5=GPA5 p6=GPB3 p7=GPA4 p8=GPB4 p9=GPA3 p10=GPB5 p11=GPA2 p12=GPB6 p13=GPA1 p14=GPB7 p15=GPA0 p16=VDD p17=INTA p18=VSS p19=INTB p20=NC p21=RESET p22=SCK p23=A2 p24=SDA p25=A1 p26=NC p27=A0 p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
+'rail com:14 voltage=0 frequency=50 t=Earth
+'rail com:15 voltage=0 frequency=50 t=Earth
+'rail com:16 voltage=0 frequency=50 t=Earth
+'rail com:17 voltage=3.3 frequency=50 t=Rail
+'rail com:18 voltage=3.3 frequency=50 t=Rail
+'rail com:19 voltage=3.3 frequency=50 t=Rail
+'rail com:20 voltage=3.3 frequency=50 t=Rail
+'rail com:21 voltage=3.3 frequency=50 t=Rail
+'rail com:22 voltage=0 frequency=50 t=Earth
+'microcontroller #3:12 #5:16 #1:18 #2:13 header=Catnip Chirp Soil sensor sz=6 p0=MISO p1=VCC p2=SCK p3=SDA/MOSI p4=RESET p5=GND p6= p7= p8= p9= p10= p11= p12= p13= p14= p15= p16= p17= p18= p19= p20= p21= p22= p23= p24= p25= p26= p27= p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
+'microcontroller #3:12 #1:14 #0:19 #2:13 header=Adafruit BMP085 Breakout sz=6 p0=VCC p1=GND p2=SCL p3=SDA p4=3.3 p5= p6= p7= p8= p9= p10= p11= p12= p13= p14= p15= p16= p17= p18= p19= p20= p21= p22= p23= p24= p25= p26= p27= p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
+'microcontroller #2:13 #3:12 #1:15 #0:20 header=MCP9808 High Accuracy I2C Temperature Sensor Breakout Board sz=8 p0=VDD p1=GND p2=SCL p3=SDA p4=ALERT p5=A0 p6=A1 p7=A2 p8= p9= p10= p11= p12= p13= p14= p15= p16= p17= p18= p19= p20= p21= p22= p23= p24= p25= p26= p27= p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
+'microcontroller #4:12 #0:17 #3:13 header=Adafruit I2C Non-Volatile FRAM breakout - 256Kbit / 32KByte sz=8 p0=VCC p1=GND p2=WP p3=SCL p4=SDA p5=A2 p6=A1 p7=A0 p8= p9= p10= p11= p12= p13= p14= p15= p16= p17= p18= p19= p20= p21= p22= p23= p24= p25= p26= p27= p28= p29= p30= p31= p32= p33= p34= p35= p36= p37= p38= p39=
+'microcontroller #0:23 #25:23 #31:12 #2:21 #6:22 #29:13 header=Feather Huzzah sz=32 p0=RST p1= p2=3V p3= p4=NC p5= p6=GND p7= p8=ADC p9=BAT p10=NC p11=EN p12=NC p13=USB p14=NC p15=14 p16=NC p17=12 p18=NC p19=13 p20=SCK p21=15 p22=MO p23=0 p24=MI p25=16 p26=RX p27=2 p28=TX p29=5 SCL p30=CHPD p31=4 SDA p32= p33= p34= p35= p36= p37= p38= p39=

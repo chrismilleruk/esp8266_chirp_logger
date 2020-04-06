@@ -28,7 +28,7 @@ const int interval_ms = 60000;
 #include "Adafruit_MCP9808.h"
 #include <Adafruit_BMP085_U.h>
 #include <I2CSoilMoistureSensor.h>
-
+#include "Adafruit_MCP23017.h"
 
 // Navigate to http://esp8266.local/fram.txt
 
@@ -81,9 +81,11 @@ void setup ( void ) {
 	digitalWrite ( led, 0 );
 	Serial.begin ( 74880 );
 
-  setupNetwork();
-  setupStorage();
   setupSensors();
+  setRAG(HIGH, HIGH, LOW);
+  setupNetwork();
+  setRAG(HIGH, HIGH, HIGH);
+  setupStorage();
 
 }
 
@@ -93,8 +95,10 @@ void loop ( void ) {
     startTime = wakeupTime;
   }
 
+  setRAG(LOW, LOW, HIGH);
   sensor_values_t values = readSensors(true);
   // printSensorData(&values);
+  setRAG(LOW, HIGH, LOW);
   storeSensorData(&values);
   sendSensorData(&values);
 
@@ -106,6 +110,7 @@ void loop ( void ) {
   Serial.print(waitTime);
   Serial.println("ms");
 
+  setRAG(LOW, LOW, LOW);
 //  delay(waitTime);
   ESP.deepSleep(waitTime * 1000);
 }
