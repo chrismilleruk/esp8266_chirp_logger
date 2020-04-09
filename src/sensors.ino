@@ -13,6 +13,7 @@ Adafruit_MCP23017 mcp23017;
 sensor_values_t sensor_values;
 bmp085_sensor_t bmp085_values;
 mcp9808_sensor_t mcp9808_values;
+mcp23017_sensor_t mcp23017_values;
 chirp_sensor_t chirp1_values;
 chirp_sensor_t chirp2_values;
 chirp_sensor_t chirp3_values;
@@ -58,7 +59,6 @@ void setupRAG() {
     mcp23017.pinMode(p, INPUT);
     mcp23017.pullUp(p, HIGH);
   }
-  // mcp23017.writeGPIOAB(0x0077);
   uint16_t ioValues = mcp23017.readGPIOAB();
   Serial.printf("💧 0x%x ", ioValues);
   if ((ioValues & 0xF) == 0xF) {
@@ -75,6 +75,7 @@ void setupRAG() {
 void setupSensors() {
   sensor_values.bmp085 = &bmp085_values;
   sensor_values.mcp9808 = &mcp9808_values;
+  sensor_values.mcp23017 = &mcp23017_values;
   sensor_values.chirp1 = &chirp1_values;
   sensor_values.chirp2 = &chirp2_values;
   sensor_values.chirp3 = &chirp3_values;
@@ -261,6 +262,9 @@ void sendSensorData(sensor_values_t * sensors) {
       url += "&light_chirp4=" + String(sensors->chirp4->light);
       url += "&moisture_chirp4=" + String(sensors->chirp4->moisture);
     }
+    if (mcp23017_detected) {
+      url += "&water_level=" + String(sensors->mcp23017->waterLevel);
+    }
 //    url += "&hall_read=" + String(sensors->hallSensor);
     url += "&vcc_volt=" + String(sensors->vccVoltage);
     url += "&resetReason=" + String(reset_info->reason);
@@ -335,6 +339,50 @@ sensor_values_t readSensors(boolean printSensorData) {
       Serial.print("Pressure:\t🪂 ");
       Serial.print(sensor_values.bmp085->pressure);
       Serial.println(" hPa");
+    }
+  }
+
+  if (mcp23017_detected) {
+    // We're using this to determine the water level.
+    // The 8 bits of Port B are set to INPUT & PULL_UP.
+    // Wires are arranged in the tank as follows:
+    // 5 4 3 2 1 GND
+    // | | | | | |
+    //   | | | | |
+    //     | | | |
+    //       | | |
+    //         | |
+    //           |
+
+    // readGPIOAB(): The LSB corresponds to Port A, pin 0, and the MSB corresponds to Port B, pin 7.
+    uint16_t ioValues = mcp23017.readGPIOAB();
+
+    // Shift the LSB & Invert MSB to get the values on Port B.
+    uint8_t ioValues2 = ~(ioValues >> 8);
+    // 5 = 0b11111
+    // 4 = 0b01111
+    // 3 = 0b00111
+    // 2 = 0b00011
+    // 1 = 0b00001
+    // 0 = 0b00000
+
+    // Shift the bits to find the MSB
+    // This means that failures such as 0b01101 will still report level 4
+    uint8_t level = 0;
+    while (ioValues2 > 0) {
+      level += 1;
+      ioValues2 = ioValues2 >> 1;
+    }
+
+    mcp23017_values.waterLevel = level;
+
+    if (printSensorData) {
+      Serial.print("🌱 MCP23017\t");
+      Serial.print("Value:\t ");
+      Serial.printf("\t0x%x ", (uint8_t)~(ioValues >> 8));
+      Serial.printf("\tLevel:\t💧 %d", sensor_values.mcp23017->waterLevel);
+    
+      Serial.println("");
     }
   }
 
