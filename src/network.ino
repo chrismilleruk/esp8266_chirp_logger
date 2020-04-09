@@ -1,9 +1,13 @@
 
 
 void setupNetwork() {
-
+	Serial.println("🌐 Start Wifi");
 	WiFi.mode(WIFI_STA);
 	WiFi.begin(wifi_ssid, wifi_password);
+}
+
+
+void waitForNetwork() {
 	Serial.print("🌐 ");
 
 	// Wait for connection

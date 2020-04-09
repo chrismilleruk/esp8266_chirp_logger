@@ -41,23 +41,27 @@ void setRAG(uint8_t red, uint8_t amber, uint8_t green) {
   }
 }
 
-void setupSensors() {
-  sensor_values.bmp085 = &bmp085_values;
-  sensor_values.mcp9808 = &mcp9808_values;
-  sensor_values.chirp1 = &chirp1_values;
-  sensor_values.chirp2 = &chirp2_values;
-  sensor_values.chirp3 = &chirp3_values;
-  sensor_values.chirp4 = &chirp4_values;
+void setupRAG() {
 
+  // The MCP23017 is a 16-bit IO port expander.
+  // pinMode(): Pins numbered from 0 to 7 are on Port A, and pins numbered from 8 to 15 are on Port B.
+  // readGPIOAB()/writeGPIOAB(): The LSB corresponds to Port A, pin 0, and the MSB corresponds to Port B, pin 7.
+  // In order to check that it is present we need to write some values and read them.
+  // The water level sensors are on Port B so we just check 
   Serial.print("🌱 Setup MCP23017.. ");
   mcp23017.begin();
-  for (int p = 0; p < 16; p +=1) {
+  for (int p = 0; p < 8; p +=1) {
     mcp23017.pinMode(p, OUTPUT);
+    mcp23017.digitalWrite(p, HIGH);
   }
-  mcp23017.writeGPIOAB(0x7777);
+  for (int p = 8; p < 16; p +=1) {
+    mcp23017.pinMode(p, INPUT);
+    mcp23017.pullUp(p, HIGH);
+  }
+  // mcp23017.writeGPIOAB(0x0077);
   uint16_t ioValues = mcp23017.readGPIOAB();
   Serial.printf("💧 0x%x ", ioValues);
-  if (ioValues == 0x7777) {
+  if ((ioValues & 0xF) == 0xF) {
     mcp23017_detected = true;
     deviceCount += 1;
     Serial.println("OK");
@@ -65,7 +69,16 @@ void setupSensors() {
     Serial.println("Oops, no MCP23017 detected!");
   }
   mcp23017.writeGPIOAB(0x0000);
-  setRAG(HIGH, LOW, LOW);
+
+}
+
+void setupSensors() {
+  sensor_values.bmp085 = &bmp085_values;
+  sensor_values.mcp9808 = &mcp9808_values;
+  sensor_values.chirp1 = &chirp1_values;
+  sensor_values.chirp2 = &chirp2_values;
+  sensor_values.chirp3 = &chirp3_values;
+  sensor_values.chirp4 = &chirp4_values;
 
   // Make sure the sensor is found, you can also pass in a different i2c
   // address with mcp9808.begin(0x19) for example

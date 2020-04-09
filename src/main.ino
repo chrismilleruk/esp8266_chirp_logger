@@ -80,13 +80,17 @@ void setup ( void ) {
 	pinMode ( led, OUTPUT );
 	digitalWrite ( led, 0 );
 	Serial.begin ( 74880 );
+  setupRAG();
 
-  setupSensors();
-  setRAG(HIGH, HIGH, LOW);
+  setRAG(HIGH, LOW, LOW);
   setupNetwork();
-  setRAG(HIGH, HIGH, HIGH);
+  setupSensors();
+
+  setRAG(HIGH, HIGH, LOW);
   setupStorage();
 
+  setRAG(HIGH, HIGH, HIGH);
+  waitForNetwork();
 }
 
 void loop ( void ) {
@@ -97,7 +101,7 @@ void loop ( void ) {
 
   setRAG(LOW, LOW, HIGH);
   sensor_values_t values = readSensors(true);
-  // printSensorData(&values);
+  
   setRAG(LOW, HIGH, LOW);
   storeSensorData(&values);
   sendSensorData(&values);
@@ -111,6 +115,5 @@ void loop ( void ) {
   Serial.println("ms");
 
   setRAG(LOW, LOW, LOW);
-//  delay(waitTime);
   ESP.deepSleep(waitTime * 1000);
 }
