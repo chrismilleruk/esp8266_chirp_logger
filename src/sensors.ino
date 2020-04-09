@@ -338,6 +338,48 @@ sensor_values_t readSensors(boolean printSensorData) {
     }
   }
 
+  if (mcp23017_detected) {
+    // We're using this to determine the water level.
+    // The 8 bits of Port B are set to INPUT & PULL_UP.
+    // Wires are arranged in the tank as follows:
+    // 5 4 3 2 1 GND
+    // | | | | | |
+    //   | | | | |
+    //     | | | |
+    //       | | |
+    //         | |
+    //           |
+
+    // readGPIOAB(): The LSB corresponds to Port A, pin 0, and the MSB corresponds to Port B, pin 7.
+    uint16_t ioValues = mcp23017.readGPIOAB();
+
+    // Shift the LSB & Invert MSB to get the values on Port B.
+    uint8_t ioValues2 = ~(ioValues >> 8);
+    // 5 = 0b11111
+    // 4 = 0b01111
+    // 3 = 0b00111
+    // 2 = 0b00011
+    // 1 = 0b00001
+    // 0 = 0b00000
+
+    // Shift the bits to find the MSB
+    // This means that failures such as 0b01101 will still report level 4
+    uint8_t level = 0;
+    while (ioValues2 > 0) {
+      level += 1;
+      ioValues2 = ioValues2 >> 1;
+    }
+
+    if (printSensorData) {
+      Serial.print("🌱 MCP23017\t");
+      Serial.print("Value:\t ");
+      Serial.printf("\t0x%x ", (uint8_t)~(ioValues >> 8));
+      Serial.printf("\tLevel:\t💧 %d", level);
+    
+      Serial.println("");
+    }
+  }
+
   if (mcp9808_detected) {
     /* Read the temperature from the MCP9808 */
     mcp9808_values.temperature = mcp9808.readTempC();
