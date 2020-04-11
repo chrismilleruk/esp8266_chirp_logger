@@ -51,17 +51,26 @@ void setupRAG() {
   // The water level sensors are on Port B so we just check 
   Serial.print("🌱 Setup MCP23017.. ");
   mcp23017.begin();
+  Serial.print(". ");
   for (int p = 0; p < 8; p +=1) {
     mcp23017.pinMode(p, OUTPUT);
     mcp23017.digitalWrite(p, HIGH);
+    Serial.print(".");
   }
+  Serial.print(". ");
   for (int p = 8; p < 16; p +=1) {
     mcp23017.pinMode(p, INPUT);
-    mcp23017.pullUp(p, HIGH);
+    // Use external pullups for pins 8-10
+    if (p > 10) {
+      mcp23017.pullUp(p, HIGH);
+    }
+    Serial.print(".");
   }
+  Serial.print(".");
+  mcp23017.writeGPIOAB(0x0000);
   uint16_t ioValues = mcp23017.readGPIOAB();
   Serial.printf("💧 0x%x ", ioValues);
-  if ((ioValues & 0xF) == 0xF) {
+  if ((ioValues & 0xF) == 0x0) {
     mcp23017_detected = true;
     deviceCount += 1;
     Serial.println("OK");
