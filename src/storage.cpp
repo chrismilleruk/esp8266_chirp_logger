@@ -1,3 +1,9 @@
+#include "main.h"
+
+int addr = 0x10;
+const int addrStart = addr;
+const int addrStep = 16;
+const int addrLimit = addrStep * 256;
 
 /* Example code for the Adafruit I2C FRAM breakout */
 Adafruit_FRAM_I2C fram     = Adafruit_FRAM_I2C();

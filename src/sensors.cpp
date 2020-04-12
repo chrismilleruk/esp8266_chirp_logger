@@ -1,5 +1,10 @@
+#include "main.h"
 
-#include <StackThunk.h>
+#ifdef ESP8266
+extern "C" {
+  #include "user_interface.h"
+}
+#endif
 
 // Create the MCP9808 temperature sensor object
 Adafruit_MCP9808 mcp9808 = Adafruit_MCP9808();
@@ -19,6 +24,10 @@ chirp_sensor_t chirp2_values;
 chirp_sensor_t chirp3_values;
 chirp_sensor_t chirp4_values;
 
+ADC_MODE(ADC_VCC);
+
+// The following required by sendSensorData:
+#include <StackThunk.h>
 boolean mcp23017_detected = false;
 boolean bmp085_detected = false;
 boolean mcp9808_detected = false;
@@ -26,8 +35,9 @@ boolean chirp1_detected = false;
 boolean chirp2_detected = false;
 boolean chirp3_detected = false;
 boolean chirp4_detected = false;
+struct rst_info *reset_info = system_get_rst_info();
+unsigned int deviceCount = 0;
 
-ADC_MODE(ADC_VCC);
 
 void setRAG(uint8_t red, uint8_t amber, uint8_t green) {
   if (mcp23017_detected) {
@@ -154,25 +164,8 @@ void setupSensors() {
    Serial.println("Ooops, Chirps not detected.");
  }
 
-  // sensor_t sensor;
-
-  // if (bmp085_detected) {
-  //   bmp.getSensor(&sensor);
-  //   Serial.println("------------------------------------");
-  //   Serial.print  ("Sensor:       "); Serial.println(sensor.name);
-  //   Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
-  //   Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
-  //   Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" hPa");
-  //   Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" hPa");
-  //   Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" hPa");
-  //   Serial.println("------------------------------------");
-  //   Serial.println("");
-  // }
-
   Serial.printf("🌱 Found %d devices\n", deviceCount);
 }
-
-
 
 void printChirpSensorData(chirp_sensor_t * chirp) {
   Serial.printf("Temp:\t🌡 %.2f*C\tMoist:\t💧%.1f\tLight:\t☀️ %.1f\n",
@@ -180,135 +173,6 @@ void printChirpSensorData(chirp_sensor_t * chirp) {
     chirp->moisture,
     chirp->light
   );
-}
-
-void sendSensorData(sensor_values_t * sensors) {
-  Serial.println();
-
-  static const char* host = "groker.init.st";
-  int port = 443;
-  String url = "/api/events";
-  url += "?accessKey=" + String(initialstate_access_key);
-  url += "&bucketKey=" + String(initialstate_bucket_key);
-
-  // *.initialstate.com
-  // *.init.st
-  // Expires: Sunday, 7 March 2021 at 12:00:00 Greenwich Mean Time
-  // SHA 256  EF 25 4B 79 96 E1 EE BB A4 82 F6 CB B2 16 02 DC F1 2B C0 EB 9E 10 30 F5 A1 75 7E 23 63 BA 66 AB
-  // SHA-1    26 79 30 97 D3 DF 5A 60 55 C2 FC 29 B4 12 8B 56 28 B4 E6 05
-  static const char* fingerprint PROGMEM = "26 79 30 97 D3 DF 5A 60 55 C2 FC 29 B4 12 8B 56 28 B4 E6 05";
-
-  // Invalid Fingerprint for testing.
-  // static const char* fingerprint PROGMEM = "BA D0 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"; 
-  
-  if ( WiFi.status() == WL_CONNECTED ) {
-
-    // Track memory usage
-    ESP.resetFreeContStack();
-    uint32_t freeStackStart = ESP.getFreeContStack();
-
-    // Use WiFiClientSecure class to create TLS connection
-    WiFiClientSecure client;
-    boolean isSecure = (port == 443);
-
-    Serial.print("🔒 connecting to ");
-    Serial.println(host);
-
-    // We will test the fingerprint of the SSL cert to ensure it matches.
-    if (isSecure) {
-      client.setFingerprint(fingerprint);
-
-      if (client.connect(host, port)) {
-        Serial.println("🔐 secure connection made");
-      } else {
-        setRAG(HIGH, HIGH, LOW);
-        Serial.println("🔐 secure connection failed");
-
-        // This could be because the SSL cert has been renewed, and the fingerprint has changed.
-        // Try insecure connection instead.
-        isSecure = false;
-      }
-    }
-
-    if (!isSecure) {
-      // Using setInsecure will not validate the SSL cert in any way.
-      client.setInsecure();
-
-      if (client.connect(host, port)) {
-        Serial.printf("🔒⚠️  insecure connection on port %d\n", port);
-      } else {
-        setRAG(HIGH, LOW, LOW);
-        Serial.println("🔒❌ connection failed");
-        return;
-      }
-    }
-
-
-    if (mcp9808_detected) {
-      url += "&temp_c=" + String(sensors->mcp9808->temperature);
-    }
-    if (bmp085_detected) {
-      url += "&temp_b=" + String(sensors->bmp085->temperature);
-      url += "&pressure_b=" + String(sensors->bmp085->pressure);
-    }
-    if (chirp1_detected) {
-      url += "&temp_chirp1=" + String(sensors->chirp1->temperature);
-      url += "&light_chirp1=" + String(sensors->chirp1->light);
-      url += "&moisture_chirp1=" + String(sensors->chirp1->moisture);
-    }
-    if (chirp2_detected) {
-      url += "&temp_chirp2=" + String(sensors->chirp2->temperature);
-      url += "&light_chirp2=" + String(sensors->chirp2->light);
-      url += "&moisture_chirp2=" + String(sensors->chirp2->moisture);
-    }
-    if (chirp3_detected) {
-      url += "&temp_chirp3=" + String(sensors->chirp3->temperature);
-      url += "&light_chirp3=" + String(sensors->chirp3->light);
-      url += "&moisture_chirp3=" + String(sensors->chirp3->moisture);
-    }
-    if (chirp4_detected) {
-      url += "&temp_chirp4=" + String(sensors->chirp4->temperature);
-      url += "&light_chirp4=" + String(sensors->chirp4->light);
-      url += "&moisture_chirp4=" + String(sensors->chirp4->moisture);
-    }
-    if (mcp23017_detected) {
-      url += "&water_level=" + String(sensors->mcp23017->waterLevel);
-    }
-//    url += "&hall_read=" + String(sensors->hallSensor);
-    url += "&vcc_volt=" + String(sensors->vccVoltage);
-    url += "&resetReason=" + String(reset_info->reason);
-    url += "&deviceCount=" + String(deviceCount);
-    url += "&isSecure=" + String(isSecure);
-
-    Serial.print("🌐 URL: ");
-    Serial.println(url);
-
-    Serial.print("🌐 Request ");
-    client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-    "Host: " + host + "\r\n" +
-    "Connection: close\r\n\r\n");
-
-    int repeatCounter = 10;
-    while (!client.available() && repeatCounter--) {
-      delay(500);
-      Serial.print(".");
-    }
-    Serial.println("sent 🚀");
-    
-    String line;
-    line = client.readStringUntil('\n');
-
-    Serial.println("🌐 Response:");
-    Serial.println(line);
-
-    client.stop();
-    Serial.println("🔐 Connection Closed");
-      
-    // Track memory usage
-    uint32_t freeStackEnd = ESP.getFreeContStack();
-    Serial.printf("\n💻 CONT stack used: %d\n", freeStackStart - freeStackEnd);
-    Serial.printf("💻 BSSL stack used: %d\n-------\n\n", stack_thunk_get_max_usage());
-  }
 }
 
 sensor_values_t readSensors(boolean printSensorData) {
@@ -455,4 +319,135 @@ sensor_values_t readSensors(boolean printSensorData) {
   }
 
   return sensor_values;
+}
+
+
+
+void sendSensorData(sensor_values_t * sensors) {
+  Serial.println();
+
+  static const char* host = "groker.init.st";
+  int port = 443;
+  String url = "/api/events";
+  url += "?accessKey=" + String(initialstate_access_key);
+  url += "&bucketKey=" + String(initialstate_bucket_key);
+
+  // *.initialstate.com
+  // *.init.st
+  // Expires: Sunday, 7 March 2021 at 12:00:00 Greenwich Mean Time
+  // SHA 256  EF 25 4B 79 96 E1 EE BB A4 82 F6 CB B2 16 02 DC F1 2B C0 EB 9E 10 30 F5 A1 75 7E 23 63 BA 66 AB
+  // SHA-1    26 79 30 97 D3 DF 5A 60 55 C2 FC 29 B4 12 8B 56 28 B4 E6 05
+  static const char* fingerprint PROGMEM = "26 79 30 97 D3 DF 5A 60 55 C2 FC 29 B4 12 8B 56 28 B4 E6 05";
+
+  // Invalid Fingerprint for testing.
+  // static const char* fingerprint PROGMEM = "BA D0 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF"; 
+  
+  if ( WiFi.status() == WL_CONNECTED ) {
+
+    // Track memory usage
+    ESP.resetFreeContStack();
+    uint32_t freeStackStart = ESP.getFreeContStack();
+
+    // Use WiFiClientSecure class to create TLS connection
+    WiFiClientSecure client;
+    boolean isSecure = (port == 443);
+
+    Serial.print("🔒 connecting to ");
+    Serial.println(host);
+
+    // We will test the fingerprint of the SSL cert to ensure it matches.
+    if (isSecure) {
+      client.setFingerprint(fingerprint);
+
+      if (client.connect(host, port)) {
+        Serial.println("🔐 secure connection made");
+      } else {
+        setRAG(HIGH, HIGH, LOW);
+        Serial.println("🔐 secure connection failed");
+
+        // This could be because the SSL cert has been renewed, and the fingerprint has changed.
+        // Try insecure connection instead.
+        isSecure = false;
+      }
+    }
+
+    if (!isSecure) {
+      // Using setInsecure will not validate the SSL cert in any way.
+      client.setInsecure();
+
+      if (client.connect(host, port)) {
+        Serial.printf("🔒⚠️  insecure connection on port %d\n", port);
+      } else {
+        setRAG(HIGH, LOW, LOW);
+        Serial.println("🔒❌ connection failed");
+        return;
+      }
+    }
+
+
+    if (mcp9808_detected) {
+      url += "&temp_c=" + String(sensors->mcp9808->temperature);
+    }
+    if (bmp085_detected) {
+      url += "&temp_b=" + String(sensors->bmp085->temperature);
+      url += "&pressure_b=" + String(sensors->bmp085->pressure);
+    }
+    if (chirp1_detected) {
+      url += "&temp_chirp1=" + String(sensors->chirp1->temperature);
+      url += "&light_chirp1=" + String(sensors->chirp1->light);
+      url += "&moisture_chirp1=" + String(sensors->chirp1->moisture);
+    }
+    if (chirp2_detected) {
+      url += "&temp_chirp2=" + String(sensors->chirp2->temperature);
+      url += "&light_chirp2=" + String(sensors->chirp2->light);
+      url += "&moisture_chirp2=" + String(sensors->chirp2->moisture);
+    }
+    if (chirp3_detected) {
+      url += "&temp_chirp3=" + String(sensors->chirp3->temperature);
+      url += "&light_chirp3=" + String(sensors->chirp3->light);
+      url += "&moisture_chirp3=" + String(sensors->chirp3->moisture);
+    }
+    if (chirp4_detected) {
+      url += "&temp_chirp4=" + String(sensors->chirp4->temperature);
+      url += "&light_chirp4=" + String(sensors->chirp4->light);
+      url += "&moisture_chirp4=" + String(sensors->chirp4->moisture);
+    }
+    if (mcp23017_detected) {
+      url += "&water_level=" + String(sensors->mcp23017->waterLevel);
+    }
+    //    url += "&hall_read=" + String(sensors->hallSensor);
+    url += "&vcc_volt=" + String(sensors->vccVoltage);
+    url += "&resetReason=" + String(reset_info->reason);
+    url += "&deviceCount=" + String(deviceCount);
+    url += "&isSecure=" + String(isSecure);
+
+    Serial.print("🌐 URL: ");
+    Serial.println(url);
+
+    Serial.print("🌐 Request ");
+    client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+    "Host: " + host + "\r\n" +
+    "Connection: close\r\n\r\n");
+
+    int repeatCounter = 10;
+    while (!client.available() && repeatCounter--) {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println("sent 🚀");
+    
+    String line;
+    line = client.readStringUntil('\n');
+
+    Serial.println("🌐 Response:");
+    Serial.println(line);
+
+    client.stop();
+    Serial.println("🔐 Connection Closed");
+      
+    // Track memory usage
+    uint32_t freeStackEnd = ESP.getFreeContStack();
+    Serial.printf("\n💻 CONT stack used: %d\n", freeStackStart - freeStackEnd);
+    Serial.printf("💻 BSSL stack used: %d\n-------\n\n", stack_thunk_get_max_usage());
+  }
 }

@@ -1,4 +1,5 @@
 
+#include "network.h"
 
 void setupNetwork() {
 	Serial.println("🌐 Start Wifi");
@@ -27,3 +28,4 @@ void waitForNetwork() {
 	// }
 
 }
+
